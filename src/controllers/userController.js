@@ -1,11 +1,11 @@
-import userService from "../services/userService";
+import userService from '../services/userService';
 
 let handleLogin = async (req, res) => {
     let { email, password } = req.body;
     if (!email || !password) {
         return res.status(500).json({
             errCode: 1,
-            message: "Missing inputs parameter!",
+            message: 'Missing inputs parameter!',
         });
     }
 
@@ -24,7 +24,7 @@ let handleGetAllUsers = async (req, res) => {
     let users = await userService.getAllUsers(id);
     return res.status(200).json({
         errCode: 0,
-        errMessage: "get all user success",
+        errMessage: 'get all user success',
         users,
     });
 };
@@ -49,12 +49,12 @@ let handleGetAllCodes = async (req, res) => {
         setTimeout(async () => {
             let data = await userService.getAllCodes(req.query.type);
             return res.status(200).json(data);
-        }, 1000);
+        });
     } catch (error) {
         console.log(error);
         return res.status(200).json({
             errCode: -1,
-            errMessage: "Error from server",
+            errMessage: 'Error from server',
         });
     }
 };

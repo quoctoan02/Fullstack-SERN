@@ -46,7 +46,13 @@ let verifyBookAppointment = (data) => {
 let postBookAppointment = (data) => {
     return new Promise(async (resolve, reject) => {
         try {
-            if (!data.email || !data.doctorId || !data.date || !data.timeType) {
+            if (
+                !data.email ||
+                !data.doctorId ||
+                !data.date ||
+                !data.timeType ||
+                !data.phoneNumber
+            ) {
                 resolve({
                     errCode: 1,
                     errMessage: 'Missing required',
@@ -55,29 +61,33 @@ let postBookAppointment = (data) => {
                 let token = uuidv4();
 
                 //upsert patient
-                let user = await db.User.findOrCreate({
-                    where: { email: data.email },
+                let patient = await db.Patient.findOrCreate({
+                    where: { email: data.email, phoneNumber: data.phoneNumber },
                     defaults: {
                         email: data.email,
-                        roleId: 'R3',
+                        phoneNumber: data.phoneNumber,
+                        reason: data.reason,
+                        address: data.address,
+                        illnessHistory: data.illnessHistory,
+                        gender: data.gender,
+                        fullName: data.fullName,
+                        birthday: data.birthday,
                     },
                 });
                 //create booking record
-                if (user && user[0]) {
+                if (patient && patient[0]) {
                     let [booking, bookingCreated] = await db.Booking.findOrCreate({
                         where: {
-                            patientId: user[0].id,
+                            patientId: patient[0].id,
                             date: data.date,
                             timeType: data.timeType,
-                            phoneNumber: data.phoneNumber,
                         },
                         defaults: {
-                            phoneNumber: data.phoneNumber,
                             doctorId: data.doctorId,
                             statusId: 'S1',
                             date: data.date,
                             timeType: data.timeType,
-                            patientId: user[0].id,
+                            patientId: patient[0].id,
                             token: token,
                         },
                     });

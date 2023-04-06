@@ -9,6 +9,21 @@ module.exports = (sequelize, DataTypes) => {
          */
         static associate(models) {
             // define association here
+            Booking.belongsTo(models.Patient, {
+                foreignKey: 'patientId',
+                targetKey: 'id',
+                as: 'patientData',
+            });
+            Booking.belongsTo(models.Allcode, {
+                foreignKey: 'statusId',
+                targetKey: 'keyMap',
+                as: 'statusData',
+            });
+            Booking.belongsTo(models.Allcode, {
+                foreignKey: 'timeType',
+                targetKey: 'keyMap',
+                as: 'timeTypeBooking',
+            });
         }
     }
     Booking.init(
@@ -18,7 +33,6 @@ module.exports = (sequelize, DataTypes) => {
             date: DataTypes.DATEONLY,
             patientId: DataTypes.INTEGER,
             timeType: DataTypes.STRING,
-            phoneNumber: DataTypes.STRING,
             token: DataTypes.UUID,
         },
         {

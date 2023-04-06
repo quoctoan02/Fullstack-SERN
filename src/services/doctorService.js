@@ -1,7 +1,7 @@
 import db from '../models/index';
 require('dotenv').config();
 import _ from 'lodash';
-
+import { sendAttachment } from './emailService';
 const MAX_NUMBER_SCHEDULE = process.env.MAX_NUMBER_SCHEDULE;
 
 let getTopDoctorHome = (limitInput) => {
@@ -439,6 +439,102 @@ let getProfileDoctor = (doctorId) => {
         }
     });
 };
+
+let getListPatient = (doctorId, date) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!doctorId || !date) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing required parameters',
+                });
+            } else {
+                let data = await db.Booking.findAll({
+                    where: {
+                        statusId: 'S2',
+                        date,
+                        doctorId,
+                    },
+                    attributes: ['date', 'id'],
+                    include: [
+                        {
+                            model: db.Patient,
+                            attributes: [
+                                'email',
+                                'fullName',
+                                'address',
+                                'birthday',
+                                'reason',
+                                'illnessHistory',
+                                'phoneNumber',
+                            ],
+                            as: 'patientData',
+                            include: [
+                                {
+                                    model: db.Allcode,
+                                    attributes: ['valueVi', 'valueEn'],
+                                    as: 'genderPatient',
+                                },
+                            ],
+                        },
+                        {
+                            model: db.Allcode,
+                            as: 'timeTypeBooking',
+                            attributes: ['valueVi', 'valueEn'],
+                        },
+                        {
+                            model: db.Allcode,
+                            as: 'statusData',
+                            attributes: ['valueVi', 'valueEn'],
+                        },
+                    ],
+                    raw: false,
+                    nest: true,
+                });
+                resolve({
+                    errCode: 0,
+                    errMessage: 'ok',
+                    data,
+                });
+            }
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
+let sendPrescription = (data) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            if (!data.email || !data.imageBase64 || !data.bookingId) {
+                resolve({
+                    errCode: 1,
+                    errMessage: 'Missing required parameters',
+                });
+            } else {
+                let appointment = await db.Booking.findOne({
+                    where: {
+                        id: data.bookingId,
+                    },
+                    raw: false,
+                });
+                if (appointment) {
+                    appointment.statusId = 'S3';
+                    await appointment.save();
+                }
+
+                await sendAttachment(data);
+                resolve({
+                    errCode: 0,
+                    errMessage: 'ok',
+                });
+            }
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
 module.exports = {
     getTopDoctorHome,
     getAllDoctors,
@@ -447,5 +543,7 @@ module.exports = {
     bulkCreateSchedule,
     getScheduleByDate,
     getExtraDoctorInfo,
+    getListPatient,
     getProfileDoctor,
+    sendPrescription,
 };

@@ -101,6 +101,31 @@ let getProfileDoctor = async (req, res) => {
         });
     }
 };
+let getListPatient = async (req, res) => {
+    try {
+        let message = await doctorService.getListPatient(req.query.doctorId, req.query.date);
+        return res.status(200).json(message);
+    } catch (error) {
+        console.log(error);
+        return res.status(200).json({
+            errCode: 1,
+            errMessage: 'Error from server',
+        });
+    }
+};
+
+let sendPrescription = async (req, res) => {
+    try {
+        let message = await doctorService.sendPrescription(req.body);
+        return res.status(200).json(message);
+    } catch (error) {
+        console.log(error);
+        return res.status(200).json({
+            errCode: 1,
+            errMessage: 'Error from server',
+        });
+    }
+};
 
 module.exports = {
     handleGetTopDoctorHome,
@@ -111,4 +136,6 @@ module.exports = {
     getScheduleByDate,
     getExtraDoctorInfo,
     getProfileDoctor,
+    getListPatient,
+    sendPrescription,
 };
