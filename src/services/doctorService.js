@@ -10,11 +10,16 @@ let getTopDoctorHome = (limitInput) => {
             let users = await db.User.findAll({
                 limit: limitInput,
                 where: { roleId: 'R2' },
-                order: [['createdAt', 'DESC']],
+                // order: [['createdAt', 'ASC']],
                 attributes: {
                     exclude: ['password'],
                 },
                 include: [
+                    {
+                        model: db.Doctor_Info,
+                        attributes: ['specialtyId'],
+                        include: [{ model: db.Specialty, attributes: ['name'] }],
+                    },
                     { model: db.Allcode, as: 'positionData', attributes: ['valueEn', 'valueVi'] },
                     { model: db.Allcode, as: 'genderData', attributes: ['valueEn', 'valueVi'] },
                 ],
@@ -40,6 +45,17 @@ let getAllDoctors = () => {
                     exclude: ['password', 'image'],
                 },
             });
+            let listProvinces = await db.Doctor_Info.findAll({
+                attributes: ['provinceId'],
+                include: {
+                    model: db.Allcode,
+                    as: 'provinceData',
+                    attributes: ['valueEn', 'valueVi'],
+                },
+                raw: false,
+            });
+            doctors.listProvinces = listProvinces;
+            console.log(doctors);
             resolve({
                 errCode: 0,
                 data: doctors,
@@ -67,7 +83,6 @@ let saveDetailInfoDoctor = (inputData) => {
                 specialtyId,
                 clinicId,
             } = inputData;
-            console.log('inputData: ', inputData);
 
             if (
                 !doctorId ||
@@ -76,8 +91,7 @@ let saveDetailInfoDoctor = (inputData) => {
                 !priceId ||
                 !paymentId ||
                 !provinceId ||
-                !nameClinic ||
-                !addressClinic ||
+                !((nameClinic && addressClinic) || clinicId) ||
                 !specialtyId
             ) {
                 resolve({
@@ -198,6 +212,10 @@ let getDetailDoctor = (id) => {
                                     as: 'provinceData',
                                     attributes: ['valueEn', 'valueVi'],
                                 },
+                                {
+                                    model: db.Clinic,
+                                    attributes: ['name', 'address'],
+                                },
                             ],
                         },
                         {
@@ -211,8 +229,15 @@ let getDetailDoctor = (id) => {
                     nest: true,
                 });
 
-                if (data && data.image) {
-                    data.image = new Buffer(data.image, 'base64').toString('binary');
+                if (data) {
+                    if (data.clinicId) {
+                        data.nameClinic = data.Clinic.name;
+                        data.addressClinic = data.Clinic.address;
+                    }
+
+                    if (data.image) {
+                        data.image = Buffer.from(data.image, 'base64').toString('binary');
+                    }
                 } else if (!data) {
                     data = {};
                 }
@@ -425,7 +450,7 @@ let getProfileDoctor = (doctorId) => {
                 });
 
                 if (data && data.image) {
-                    data.image = new Buffer(data.image, 'base64').toString('binary');
+                    data.image = Buffer.from(data.image, 'base64').toString('binary');
                 } else if (!data) {
                     data = {};
                 }

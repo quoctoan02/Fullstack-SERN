@@ -24,7 +24,10 @@ module.exports = {
             descriptionMarkdown: {
                 type: Sequelize.TEXT,
             },
-            image: {
+            avatar: {
+                type: Sequelize.BLOB('long'),
+            },
+            background: {
                 type: Sequelize.BLOB('long'),
             },
             createdAt: {
